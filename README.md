@@ -4,16 +4,17 @@ Projet test dans le cadre d'une école d'été sur l'écologie spatiale.
 
 Ce dépôt contient un **modèle de métapopulation spatialement explicite** (SPOM,
 *Stochastic Patch Occupancy Model* de Hanski) appliqué à un paysage **montagneux**
-soumis au **changement climatique**, ainsi qu'un document pédagogique expliquant
-le modèle.
+soumis au **changement climatique**, son **analyse analytique** (équilibre, capacité
+de métapopulation, contribution des patchs), et un document pédagogique.
 
 ## Contenu du dépôt
 
 | Fichier | Description |
 |---|---|
-| [metapop_climate_mountain.R](metapop_climate_mountain.R) | Script R complet : génération du paysage, simulation, figures, résumé numérique |
-| [Modèle de métapopulation spatialement explicite.html](Modèle%20de%20métapopulation%20spatialement%20explicite.html) | Document explicatif (théorie + interprétation des résultats + code commenté) |
-| [Modèle de métapopulation spatialement explicite.pdf](Modèle%20de%20métapopulation%20spatialement%20explicite.pdf) | Même document, version PDF |
+| [metapop_climate_mountain.R](metapop_climate_mountain.R) | Paysage, simulation par Euler, scénarios climatiques, sensibilité, figures |
+| [metapop_capacity_eigen.R](metapop_capacity_eigen.R) | Équilibre analytique, capacité λ_M, analyse spectrale et contribution des patchs |
+| [Modèle de métapopulation spatialement explicite.html](Modèle%20de%20métapopulation%20spatialement%20explicite.html) | Document explicatif en 11 sections (théorie, résultats, équilibre, analyse spectrale, code) |
+| [Modèle de métapopulation spatialement explicite.pdf](Modèle%20de%20métapopulation%20spatialement%20explicite.pdf) | Version PDF — **antérieure**, ne contient pas les sections 8 et 9 |
 | [ressources/](ressources/) | Littérature de référence (`cameron_victor_MSc_2022.pdf`) |
 
 ## Le modèle
@@ -32,9 +33,9 @@ dp_x/dt = c_x * Σ_{y≠x} K(x,y) · p_y · A_y · (1 − p_x)  −  (e_x / A_x)
 ### Couplage au climat
 
 1. **Gradient altitudinal** : `T = 15 − 0.006 · altitude` (−0,6 °C / 100 m).
-2. **Niche thermique gaussienne** : aptitude `suit = exp(−0.5·((T − T_opt)/T_sd)²)`,
+2. **Niche thermique gaussienne** : aptitude `s = exp(−0.5·((T − T_opt)/T_sd)²)`,
    avec `T_opt = 6 °C` et `T_sd = 3 °C`.
-3. **Modulation des paramètres** : `A_eff = A_base · suit`, `c_x = c0 · suit`,
+3. **Modulation des paramètres** : `A_eff = A_base · s`, `c_x = c0 · s`,
    `e_x = e0 / A_eff`. Un réchauffement `ΔT` décale la température locale et pousse
    la zone favorable vers les sommets (*piège sommital* : moins de surface, moins
    de connectivité en altitude).
@@ -42,37 +43,85 @@ dp_x/dt = c_x * Σ_{y≠x} K(x,y) · p_y · A_y · (1 − p_x)  −  (e_x / A_x)
 ### Paysage simulé
 
 40 patchs tirés aléatoirement (`set.seed(42)`) sur 30 × 30 km, altitude en cône
-(sommet ≈ 2500 m au centre, plancher à 400 m), surface des patchs décroissante
+(sommet 2380 m, plancher 906 m sur ce tirage), surface des patchs décroissante
 avec l'altitude.
 
-## Scénarios et analyses
+## Résultats analytiques
+
+Le modèle admet une solution d'équilibre explicite, vérifiée contre la simulation
+d'Euler (écart < 10⁻¹³ par patch) :
+
+```
+p*_x = S_x / (S_x + δ_x)      S_x = Σ_y K(x,y)·A_eff,y·p_y      δ_x = e0 / (c0·A_x·s_x²)
+```
+
+- Le climat entre **au carré** dans `δ_x` : il ralentit la colonisation *et* accélère
+  l'extinction via la surface effective.
+- L'équilibre positif est **unique et globalement attractif** (l'itération est concave),
+  donc `p_init` n'influence pas le résultat. Le passage à l'extinction est une
+  bifurcation **transcritique** — pas de bistabilité ni d'hystérésis.
+
+Persistance ⟺ `λ_M > e0/c0`, où `λ_M` est la plus grande valeur propre de
+`M_xy = (A_x·s_x^1.5) · K(x,y) · (A_y·s_y^1.5)`. Son vecteur propre `w` donne la
+contribution `w²_x` de chaque patch (somme = 1), et toutes les élasticités :
+`∂lnλ_M/∂lnA_x = 2w²_x`, `∂lnλ_M/∂ln s_x = 3w²_x`.
+
+| ΔT | p̄* | λ_M | marge / seuil | top 5 patchs | altitude pondérée w² |
+|---:|---:|---:|---:|---:|---:|
+| 0 | 0,974 | 80,9 | 202 × | 68 % | 1463 m |
+| +2 | 0,945 | 41,0 | 102 × | 71 % | 1549 m |
+| +4 | 0,758 | 19,8 | 49 × | 77 % | 1933 m |
+| +6 | 0,353 | 5,4 | 14 × | 76 % | 2089 m |
+| **+8,36** | **0** | **0,40** | **1 ×** | — | — |
+
+Seuil d'extinction du paysage : **ΔT\* = 8,36 °C**. À +6 °C, un seul patch (le sommet,
+2380 m) porte le quart de la capacité du réseau.
+
+## Analyses incluses
 
 - Quatre scénarios de réchauffement : **ΔT = 0, +2, +4, +6 °C**.
-- **Analyse de sensibilité** à la capacité de dispersion : `α ∈ {0.1, 0.2, 0.3, 0.5, 0.8}` à ΔT = +4 °C.
-- **Balayage du seuil d'extinction** : ΔT de 0 à 8 °C par pas de 0,5 °C, occupancy à l'équilibre.
+- **Sensibilité à la dispersion** : `α ∈ {0.1, 0.2, 0.3, 0.5, 0.8}` à ΔT = +4 °C
+  (p̄ final de 0,92 à 0,36 — la connectivité pèse autant que le climat).
+- **Balayage du seuil** : ΔT de 0 à 8 °C par pas de 0,5 °C.
+- **Analyse spectrale** : λ_M, écart spectral λ₂/λ₁, contribution par patch,
+  validation par retrait effectif du patch pivot.
 
 ## Exécution
 
 ```r
-source("metapop_climate_mountain.R")
+source("metapop_climate_mountain.R")   # simulation + figures
+source("metapop_capacity_eigen.R")     # équilibre, capacité, contributions
 ```
 
-Dépendances (installées automatiquement si absentes) : `ggplot2`, `dplyr`,
-`tidyr`, `patchwork`.
+Le second script source le premier ; les deux s'exécutent depuis la racine du dépôt.
+Dépendances (installées automatiquement si absentes) : `ggplot2`, `dplyr`, `tidyr`,
+`patchwork`.
 
 ### Sorties produites
 
-- `metapop_climate_composite.png` — figure composite (dynamique temporelle, seuil
-  d'extinction, occupancy vs altitude, aptitude climatique vs altitude)
+`metapop_climate_mountain.R` :
+
+- `metapop_climate_composite.png` — dynamique temporelle, seuil d'extinction,
+  occupancy vs altitude, aptitude climatique vs altitude
 - `metapop_carte_scenarios.png` — cartes spatiales de l'occupancy finale par scénario
 - `metapop_sensibilite_dispersion.png` — sensibilité à la dispersion
-- Un résumé console : occupancy à l'équilibre et nombre de patchs quasi-éteints
-  (`p < 0.05`) par scénario
+- Console : occupancy à l'équilibre et patchs quasi-éteints (`p < 0.05`) par scénario
+
+`metapop_capacity_eigen.R` :
+
+- `metapop_contribution_patchs.png` — cartes de contribution `w²` par scénario,
+  contribution selon l'altitude, courbe de contribution cumulée
+- Console : λ_M, λ₂/λ₁, concentration, patchs pivots et élasticités climatiques
 
 ## Document d'accompagnement
 
-Le document HTML/PDF suit la structure suivante : contexte des métapopulations,
+Le document HTML est structuré en 11 sections : contexte des métapopulations,
 équation SPOM, sens écologique des paramètres, entrée du climat dans le modèle,
 spécificités du milieu montagneux (piège sommital, connectivité altitudinale,
-microrefuges), résultats de simulation, sensibilité à la dispersion, implications
-pour la conservation, et le code R commenté.
+microrefuges), résultats de simulation, sensibilité à la dispersion,
+**conditions d'équilibre**, **capacité de métapopulation et analyse spectrale**,
+implications pour la conservation, et le code R commenté.
+
+Une **présentation en 7 diapositives** reprend l'ensemble sous forme visuelle
+(contexte, espèces cibles, modèle, scénarios, cartes et dispersion, patchs pivots,
+pistes de validation) — voir l'artéfact publié « Archipel Vertical ».
