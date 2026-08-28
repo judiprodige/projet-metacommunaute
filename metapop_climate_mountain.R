@@ -8,6 +8,8 @@
 #  Scénarios : baseline, réchauffement modéré (+2°C), sévère (+4°C)          #
 ###############################################################################
 
+rm(list = ls())
+
 # ===========================================================================
 # 0. Packages
 # ===========================================================================
@@ -28,7 +30,7 @@ set.seed(42)
 # ===========================================================================
 
 # Nombre de patchs d'habitat
-N <- 40
+N <- 30
 
 # Coordonnées spatiales (km) – distribués dans un massif montagneux
 coords <- data.frame(
@@ -173,7 +175,7 @@ simulate_metapop <- function(patches, K, delta_T = 0,
 # 4. Lancer les scénarios
 # ===========================================================================
 
-K <- make_kernel(alpha = 0.3)
+K <- make_kernel(alpha = 0.2)
 
 cat("\n── Simulation : Baseline (ΔT = 0°C) ──\n")
 res_base <- simulate_metapop(patches, K, delta_T = 0)
@@ -333,6 +335,8 @@ p6 <- ggplot(df_thresh, aes(delta_T, p_equil)) +
        x = "Réchauffement ΔT (°C)", y = "Occupancy à l'équilibre (p̄)") +
   ylim(0, 1) +
   theme_metapop
+
+p6
 
 # ===========================================================================
 # 6. Composer et sauvegarder
