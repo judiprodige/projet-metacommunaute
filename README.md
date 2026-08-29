@@ -42,9 +42,9 @@ dp_x/dt = c_x * Σ_{y≠x} K(x,y) · p_y · A_y · (1 − p_x)  −  (e_x / A_x)
 
 ### Paysage simulé
 
-40 patchs tirés aléatoirement (`set.seed(42)`) sur 30 × 30 km, altitude en cône
-(sommet 2380 m, plancher 906 m sur ce tirage), surface des patchs décroissante
-avec l'altitude.
+30 patchs tirés aléatoirement (`set.seed(42)`) sur 30 × 30 km, altitude en cône
+(sur ce tirage : 941 – 2246 m), surface des patchs décroissante avec l'altitude,
+noyau de dispersion `α = 0,2`.
 
 ## Résultats analytiques
 
@@ -66,25 +66,27 @@ Persistance ⟺ `λ_M > e0/c0`, où `λ_M` est la plus grande valeur propre de
 contribution `w²_x` de chaque patch (somme = 1), et toutes les élasticités :
 `∂lnλ_M/∂lnA_x = 2w²_x`, `∂lnλ_M/∂ln s_x = 3w²_x`.
 
-| ΔT | p̄* | λ_M | marge / seuil | top 5 patchs | altitude pondérée w² |
-|---:|---:|---:|---:|---:|---:|
-| 0 | 0,974 | 80,9 | 202 × | 68 % | 1463 m |
-| +2 | 0,945 | 41,0 | 102 × | 71 % | 1549 m |
-| +4 | 0,758 | 19,8 | 49 × | 77 % | 1933 m |
-| +6 | 0,353 | 5,4 | 14 × | 76 % | 2089 m |
-| **+8,36** | **0** | **0,40** | **1 ×** | — | — |
+| ΔT | p̄* | patchs `p<0,05` | λ_M | marge / seuil | top 5 patchs | altitude pondérée w² |
+|---:|---:|---:|---:|---:|---:|---:|
+| 0 | 0,981 | 0 / 30 | 76,3 | 191 × | 71 % | 1391 m |
+| +2 | 0,965 | 0 / 30 | 43,9 | 110 × | 61 % | 1681 m |
+| +4 | 0,774 | 0 / 30 | 21,6 | 54 × | 59 % | 1949 m |
+| +6 | 0,416 | 8 / 30 | 6,5 | 16 × | 74 % | 2092 m |
+| **+8,42** | **0** | 30 / 30 | **0,40** | **1 ×** | — | — |
 
-Seuil d'extinction du paysage : **ΔT\* = 8,36 °C**. À +6 °C, un seul patch (le sommet,
-2380 m) porte le quart de la capacité du réseau.
+Seuil d'extinction du paysage : **ΔT\* = 8,42 °C**. À +6 °C, un seul patch de crête
+(#15, 2176 m) porte 22 % de la capacité du réseau, et dix patchs en portent 99 %.
+Le cœur fonctionnel remonte de 1391 m à 2092 m, soit ≈ 117 m par degré.
 
 ## Analyses incluses
 
 - Quatre scénarios de réchauffement : **ΔT = 0, +2, +4, +6 °C**.
 - **Sensibilité à la dispersion** : `α ∈ {0.1, 0.2, 0.3, 0.5, 0.8}` à ΔT = +4 °C
-  (p̄ final de 0,92 à 0,36 — la connectivité pèse autant que le climat).
+  (p̄ final de 0,88 à 0,26 — la connectivité pèse autant que le climat).
 - **Balayage du seuil** : ΔT de 0 à 8 °C par pas de 0,5 °C.
-- **Analyse spectrale** : λ_M, écart spectral λ₂/λ₁, contribution par patch,
-  validation par retrait effectif du patch pivot.
+- **Analyse spectrale** : λ_M, écart spectral λ₂/λ₁ (0,48 → 0,31 : le réseau se réduit
+  à un cœur unique), contribution par patch, validation par retrait effectif du patch pivot
+  (−18 % sur λ_M, là où l'élasticité `2w²` prédit −32 %).
 
 ## Exécution
 
