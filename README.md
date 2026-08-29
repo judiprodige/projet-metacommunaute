@@ -13,8 +13,9 @@ de métapopulation, contribution des patchs), et un document pédagogique.
 |---|---|
 | [metapop_climate_mountain.R](metapop_climate_mountain.R) | Paysage, simulation par Euler, scénarios climatiques, sensibilité, figures |
 | [metapop_capacity_eigen.R](metapop_capacity_eigen.R) | Équilibre analytique, capacité λ_M, analyse spectrale et contribution des patchs |
-| [Modèle de métapopulation spatialement explicite.html](Modèle%20de%20métapopulation%20spatialement%20explicite.html) | Document explicatif en 11 sections (théorie, résultats, équilibre, analyse spectrale, code) |
-| [Modèle de métapopulation spatialement explicite.pdf](Modèle%20de%20métapopulation%20spatialement%20explicite.pdf) | Version PDF — **antérieure**, ne contient pas les sections 8 et 9 |
+| [metapop_velocite_climatique.R](metapop_velocite_climatique.R) | Réchauffement transitoire, temps de relaxation, vélocités climat/colonisation, dette d'extinction |
+| [Modèle de métapopulation spatialement explicite.html](Modèle%20de%20métapopulation%20spatialement%20explicite.html) | Document explicatif en 12 sections (théorie, résultats, équilibre, analyse spectrale, vélocités, code) |
+| [Modèle de métapopulation spatialement explicite.pdf](Modèle%20de%20métapopulation%20spatialement%20explicite.pdf) | Version PDF — **antérieure**, ne contient pas les sections 8 à 10 |
 | [ressources/](ressources/) | Littérature de référence (`cameron_victor_MSc_2022.pdf`) |
 
 ## Le modèle
@@ -87,12 +88,15 @@ Le cœur fonctionnel remonte de 1391 m à 2092 m, soit ≈ 117 m par degré.
 - **Analyse spectrale** : λ_M, écart spectral λ₂/λ₁ (0,48 → 0,31 : le réseau se réduit
   à un cœur unique), contribution par patch, validation par retrait effectif du patch pivot
   (−18 % sur λ_M, là où l'élasticité `2w²` prédit −32 %).
+- **Vélocités** : réchauffement transitoire `ΔT(t) = r·t`, temps de relaxation τ, comparaison
+  `v_clim = 167·r` m/ut contre `v_col = 1/(0,006·τ)`, et retard `≈ r·τ`.
 
 ## Exécution
 
 ```r
-source("metapop_climate_mountain.R")   # simulation + figures
-source("metapop_capacity_eigen.R")     # équilibre, capacité, contributions
+source("metapop_climate_mountain.R")     # simulation + figures
+source("metapop_capacity_eigen.R")       # équilibre, capacité, contributions
+source("metapop_velocite_climatique.R")  # vélocités, transitoire, dette d'extinction
 ```
 
 Le second script source le premier ; les deux s'exécutent depuis la racine du dépôt.
@@ -115,6 +119,13 @@ Dépendances (installées automatiquement si absentes) : `ggplot2`, `dplyr`, `ti
   contribution selon l'altitude, courbe de contribution cumulée
 - Console : λ_M, λ₂/λ₁, concentration, patchs pivots et élasticités climatiques
 
+`metapop_velocite_climatique.R` :
+
+- `metapop_velocite_climatique.png` — croisement des vélocités, ralentissement critique,
+  dette d'extinction, écart optimum / occupation
+- Console : τ et v_col par scénario, retard accumulé selon le rythme de réchauffement
+- Fonction réutilisable `simulate_transient(r)` pour un réchauffement progressif
+
 ## Document d'accompagnement
 
 Le document HTML est structuré en 11 sections : contexte des métapopulations,
@@ -122,8 +133,9 @@ Le document HTML est structuré en 11 sections : contexte des métapopulations,
 spécificités du milieu montagneux (piège sommital, connectivité altitudinale,
 microrefuges), résultats de simulation, sensibilité à la dispersion,
 **conditions d'équilibre**, **capacité de métapopulation et analyse spectrale**,
-implications pour la conservation, et le code R commenté.
+**vélocité climatique vs. vélocité de colonisation**, implications pour la conservation,
+et le code R commenté.
 
-Une **présentation en 7 diapositives** reprend l'ensemble sous forme visuelle
-(contexte, espèces cibles, modèle, scénarios, cartes et dispersion, patchs pivots,
-pistes de validation) — voir l'artéfact publié « Archipel Vertical ».
+Une **présentation en 8 diapositives** reprend l'ensemble sous forme visuelle
+(contexte, espèces cibles illustrées, modèle, scénarios, cartes et dispersion, patchs pivots,
+vélocités, pistes de validation) — voir l'artéfact publié « Archipel Vertical ».
